@@ -21,23 +21,30 @@ namespace Exercise.Metrics
                 .Report.ToConsole()
                 .Build();
 
-            var processPhysicalMemoryGauge = new GaugeOptions
-            {
-                Name = "Process Physical Memory",
-                MeasurementUnit = Unit.Bytes
-            };
+            TryCpuGauge(metrics);
 
-            var process = Process.GetCurrentProcess();
-
-            metrics.Measure.Gauge.SetValue(processPhysicalMemoryGauge, process.WorkingSet64);
             //await TryTimer(metrics);
 
             await Task.WhenAll(metrics.ReportRunner.RunAllAsync());
 
             //var snapshot = metrics.Snapshot.Get();
             //await ReportEnviromentInfo(metrics);
+
             Console.WriteLine("Done");
             Console.ReadLine();
+        }
+
+        private static void TryCpuGauge(IMetricsRoot metrics)
+        {
+            var processPhysicalMemoryGauge = new GaugeOptions
+            {
+                Name = "Process Physical Memory",
+                MeasurementUnit = Unit.MegaBytes
+            };
+
+            var process = Process.GetCurrentProcess();
+
+            metrics.Measure.Gauge.SetValue(processPhysicalMemoryGauge, process.WorkingSet64 / 1024 / 1024);
         }
 
         private static async Task TryTimer(IMetricsRoot metrics)
