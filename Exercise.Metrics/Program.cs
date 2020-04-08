@@ -18,17 +18,19 @@ namespace Exercise.Metrics
             Console.WriteLine("Hello World!");
 
             var metrics = new MetricsBuilder()
+                .OutputMetrics.AsPlainText()
+                .OutputMetrics.AsJson()
                 .Report.ToConsole()
                 .Build();
 
             TryCpuGauge(metrics);
 
-            //await TryTimer(metrics);
+            await TryTimer(metrics);
 
             await Task.WhenAll(metrics.ReportRunner.RunAllAsync());
 
-            //var snapshot = metrics.Snapshot.Get();
-            //await ReportEnviromentInfo(metrics);
+            await ReportEnviromentInfo(metrics);
+            await ReportFormatedSnapshot(metrics, metrics.Snapshot.Get());
 
             Console.WriteLine("Done");
             Console.ReadLine();
@@ -91,8 +93,25 @@ namespace Exercise.Metrics
             using (var stream = new MemoryStream())
             {
                 await metrics.DefaultOutputMetricsFormatter.WriteAsync(stream, snapshot);
+
                 var result = Encoding.UTF8.GetString(stream.ToArray());
+
                 System.Console.WriteLine(result);
+            }
+        }
+
+        private static async Task ReportFormatedSnapshot(IMetricsRoot metrics, MetricsDataValueSource snapshot)
+        {
+            foreach (var formatter in metrics.OutputMetricsFormatters)
+            {
+                using (var stream = new MemoryStream())
+                {
+                    await formatter.WriteAsync(stream, snapshot);
+
+                    var result = Encoding.UTF8.GetString(stream.ToArray());
+
+                    System.Console.WriteLine(result);
+                }
             }
         }
 
